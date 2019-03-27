@@ -520,6 +520,9 @@ static ssize_t rate_limit_us_store(struct gov_attr_set *attr_set, const char *bu
 	struct sugov_policy *sg_policy;
 	unsigned int rate_limit_us;
 
+        /* Don't let userspace change this */
+        return count;
+
 	if (kstrtouint(buf, 10, &rate_limit_us))
 		return -EINVAL;
 
@@ -802,6 +805,9 @@ static int sugov_init(struct cpufreq_policy *policy)
 	lat = policy->cpuinfo.transition_latency / NSEC_PER_USEC;
 	if (lat)
 		tunables->rate_limit_us *= lat;
+
+        /* Hard-code sane rate-limit value */
+        tunables->rate_limit_us = 10000;
 
 	policy->governor_data = sg_policy;
 	sg_policy->tunables = tunables;
