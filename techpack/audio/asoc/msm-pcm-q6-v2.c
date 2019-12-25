@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -75,7 +75,7 @@ static struct snd_pcm_hardware msm_pcm_hardware_capture = {
 	.rate_min =             8000,
 	.rate_max =             384000,
 	.channels_min =         1,
-	.channels_max =         4,
+	.channels_max =         8,
 	.buffer_bytes_max =     CAPTURE_MAX_NUM_PERIODS *
 				CAPTURE_MAX_PERIOD_SIZE,
 	.period_bytes_min =	CAPTURE_MIN_PERIOD_SIZE,
@@ -591,6 +591,9 @@ static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK) {
 			prtd->enabled = STOPPED;
 			ret = q6asm_cmd_nowait(prtd->audio_client, CMD_PAUSE);
+			if (!ret)
+				ret = q6asm_cmd_nowait(prtd->audio_client,
+					CMD_FLUSH);
 			break;
 		}
 		/* pending CMD_EOS isn't expected */
@@ -879,8 +882,8 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 	int xfer;
 	char *bufptr;
 	void *data = NULL;
-	static uint32_t idx;
-	static uint32_t size;
+	uint32_t idx = 0;
+	uint32_t size = 0;
 	uint32_t offset = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd = substream->runtime->private_data;
